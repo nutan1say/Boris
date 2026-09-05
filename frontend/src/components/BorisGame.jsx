@@ -1515,7 +1515,6 @@ const BorisGame = () => {
   // GAME LOOP (single unified update + render)
   // ═══════════════════════════════════════
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     lastTimeRef.current = performance.now();
     rafRef.current = requestAnimationFrame(update);
@@ -1524,6 +1523,8 @@ const BorisGame = () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
+    // Game loop mounts once; `update` reads mutable refs each frame
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ═══════════════════════════════════════
