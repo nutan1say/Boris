@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/react';
-import { upsertScore } from '@/lib/leaderboard';
+import { upsertBestScore, upsertProfileFromClerk } from '@/lib/leaderboard';
+import VideoBackdrop from '@/components/VideoBackdrop';
 
 // ═══════════════════════════════════════
 // Boris - Level Devil Game
@@ -473,7 +474,13 @@ const BorisGame = () => {
     gameScreenRef.current = gameScreen;
   }, [gameScreen]);
 
-  // Persist score to local leaderboard once on win
+  // Sync profile + persist best score once on win
+  useEffect(() => {
+    if (user?.id) {
+      upsertProfileFromClerk(user);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (gameScreen !== 'win' || scoreSavedRef.current || !user?.id) return;
     scoreSavedRef.current = true;
@@ -482,9 +489,10 @@ const BorisGame = () => {
       user.username ||
       user.primaryEmailAddress?.emailAddress ||
       'Player';
-    upsertScore({
+    upsertBestScore({
       userId: user.id,
       name,
+      avatarUrl: user.imageUrl || null,
       deaths: totalDeathsRef.current,
       coins: totalCoinsRef.current,
     });
@@ -1644,9 +1652,12 @@ const BorisGame = () => {
             color: '#fff',
             textDecoration: 'none',
             fontWeight: 'bold',
+            padding: '6px 14px',
+            border: '1px solid rgba(255,255,255,0.45)',
+            borderRadius: '4px',
           }}
         >
-          ← Home
+          Exit
         </Link>
         <div
           style={{
@@ -1901,10 +1912,22 @@ const BorisGame = () => {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '100vh',
-            background: '#0a0a0a',
+            background: 'transparent',
             padding: '20px',
+            overflow: 'hidden',
           }}
         >
+          <VideoBackdrop className="z-0" />
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%',
+            }}
+          >
           {/* HUD — only shown during active gameplay */}
           {(gameScreen === 'playing' || gameScreen === 'levelComplete') && (
             <div
@@ -1912,21 +1935,42 @@ const BorisGame = () => {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
                 width: '800px',
+                maxWidth: '100%',
                 marginBottom: '10px',
                 fontFamily: '"Courier New", monospace',
                 fontSize: '18px',
                 color: '#fff',
+                gap: '12px',
               }}
             >
               <span data-testid="level-name" style={{ color: '#ff3366', fontWeight: 'bold' }}>
                 {LEVELS[currentLevelRef.current].name}
               </span>
-              <span data-testid="deaths-counter" style={{ color: '#ff6b35' }}>
-                💀 {displayDeaths}
-              </span>
-              <span data-testid="coins-counter" style={{ color: '#ffd700' }}>
-                🪙 {displayCoins}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span data-testid="deaths-counter" style={{ color: '#ff6b35' }}>
+                  💀 {displayDeaths}
+                </span>
+                <span data-testid="coins-counter" style={{ color: '#ffd700' }}>
+                  🪙 {displayCoins}
+                </span>
+                <Link
+                  to="/"
+                  data-testid="exit-button"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#fff',
+                    textDecoration: 'none',
+                    padding: '6px 12px',
+                    border: '1px solid rgba(255,255,255,0.4)',
+                    borderRadius: '4px',
+                    background: 'rgba(232, 93, 58, 0.85)',
+                  }}
+                >
+                  Exit
+                </Link>
               </span>
             </div>
           )}
@@ -1960,6 +2004,7 @@ const BorisGame = () => {
               ← → / A D to move | Space / ↑ / W to jump | Double-jump enabled!
             </div>
           )}
+          </div>
         </div>
       )}
       {gameScreen === 'win' && renderWinScreen()}

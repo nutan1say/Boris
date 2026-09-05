@@ -80,3 +80,6 @@ agenthub/agents/youtube/db
 
 # Mobile development
 android-sdk/ 
+SUPABASE_LOCAL.md
+frontend/yarn.lock
+frontend/node_modules/.cache/default-development/0.pack
